@@ -1,0 +1,25 @@
+{
+  "name": "abc-5-dasar-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "dev": "tsc && concurrently \"tsc -w\" \"nodemon build/app.js\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.16",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.3",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2"
+  }
+}
