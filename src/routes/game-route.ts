@@ -1,8 +1,10 @@
 import express from 'express' 
 import { GameController } from '../controllers/GameController'
+import { Authorization } from '../middlewares/authorization'
 
 const gameController = new GameController()
 const gameRouter = express.Router()
+const authorization = new Authorization()
 
 // get
 gameRouter
@@ -10,6 +12,6 @@ gameRouter
 
 // post
 gameRouter
-    .post('/words', gameController.insertWord)
+    .post('/words', authorization.uuid, gameController.insertWords)
 
 export { gameRouter }

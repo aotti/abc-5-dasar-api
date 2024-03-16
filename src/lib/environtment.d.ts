@@ -3,6 +3,7 @@ declare global {
         interface ProcessEnv {
             DB_URL: string;
             DB_APIKEY: string;
+            UUID_V4: string;
         }
     }
   }

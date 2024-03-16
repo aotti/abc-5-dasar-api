@@ -10,4 +10,7 @@ const supabaseUrl = process.env['DB_URL']
 const supabaseKey = process.env['DB_APIKEY']
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+if(supabase == null)
+    console.log('cannot connect to database');
+
 export { supabase }

@@ -1,23 +1,27 @@
+import { Request, Response } from "express";
 import { WordsRepo } from "../repository/WordsRepo"
 
 export class GameController {
     private wordsRepo = new WordsRepo()
 
-    getWords = (req: any, res: any) => {
-        // return res.status(200).json({
-        //     status: 200,
-        //     message: 'success',
-        //     data: []
-        // })
-        return 'punten'
+    getWords = (req: Request, res: Response) => {
+        this.wordsRepo.getWords(req, res)
+            .then(result => {
+                return res.status(result!.status).json({
+                    status: result!.status,
+                    message: result!.message,
+                    data: result!.data
+                })
+            })
     }
 
-    insertWord = (req: any, res: any) => {
-        this.wordsRepo.insertWord(req, res)
+    insertWords = (req: Request, res: Response) => {
+        this.wordsRepo.insertWords(req, res)
             .then(result => {
-                return res.status(200).json({
-                    status: 200,
-                    message: result
+                return res.status(result!.status).json({
+                    status: result!.status,
+                    message: result!.message,
+                    data: result!.data
                 })
             })
     }
