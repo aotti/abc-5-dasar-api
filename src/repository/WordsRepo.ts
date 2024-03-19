@@ -85,66 +85,18 @@ export class WordsRepo {
         }
         // handle promise
         try {
-            type insertPayloadType = {
-                category: string; 
-                word: string;
-            }
-            const insertPayload: insertPayloadType[] = []
-            // total limit to get data from db
-            const baseLimit = 1000
-            // limit (100) data per fetch data (for loop)
-            let [limitMin, limitMax]: [number, number] = [0, 0]
-            // loop for limit
-            for(let i=0; i<10; i++) {
-                limitMin = (i / 10) * baseLimit
-                limitMax = ((i+1) / 10) * baseLimit - 1
-                // query object for select all
-                const queryObjectSelect: IQuerySelect = {
-                    table: 'abc_words',
-                    selectColumn: this.dq.queryColumnSelector('words', 23),
-                    whereColumn: 'category',
-                    whereValue: payload[0].category,
-                    limit: { min: limitMin, max: limitMax }
-                }
-                // select data
-                const selectAllResponse = await this.dq.selectAll(queryObjectSelect) 
-                // failed to select data
-                if(selectAllResponse.data === null) {
-                    return {
-                        status: 500,
-                        message: selectAllResponse.error,
-                        data: [] as any[]
-                    } as IResponse
-                }
-                // success to select data
-                else if(selectAllResponse.error === null) {
-                    // loop payload
-                    for(let p of payload) {
-                        const selectRes: selectResType[] = selectAllResponse.data
-                        // then match the string with payload.word
-                        const matchSelectRes = () => { 
-                            // split payload word
-                            const pWords = p.word.split(', ')
-                            return this.ignoreExistWords(selectRes, pWords)
-                        }
-                        // if the word still doesnt exist in 'the category'
-                        if(matchSelectRes()) {
-                            // override current payload.word
-                            p.word = matchSelectRes() as string
-                            // then insert to the new payload
-                            insertPayload.push(p)
-                        }
-                    }
-                    // if retrieved data length < 100, break the loop
-                    if(selectAllResponse.data.length < limitMax) break
-                }
-            }
+            const matchWords = await this.matchWords(payload)
+            if((matchWords as IResponse).status) return matchWords as IResponse
+            // filtered payload for insertColumn
+            const insertPayload = matchWords as {category: string, word: string}[]
             // query object for insert
             const queryObjectInsert: Omit<IQueryInsert, 'whereColumn' | 'whereValue'> = {
                 table: 'abc_words',
                 selectColumn: this.dq.queryColumnSelector('words', 123),
                 get insertColumn() {
-                    return insertPayload
+                    // filter the array to prevent double elements 
+                    // because the 'for loop' for selectAll
+                    return insertPayload.filter((v, i, arr) => arr.indexOf(v) === i)
                 }
             }
             // insert data
@@ -171,6 +123,80 @@ export class WordsRepo {
     }
 
     // ~~ utility methods ~~
+    private async matchWords(payload: {category: string, word: string}[]) {
+        // object to make sure all word pass until last loop
+        const objPayload: {[key: string]: string[] | string} = {}
+        // loop payload
+        for(let p of payload) {
+            // fill obj payload
+            objPayload[p.word] = []
+        }
+        // filtered payload for insertColumn
+        const tempPayload: {category: string, word: string}[] = []
+        // total limit to get data from db
+        const baseLimit = 1000
+        // limit (100) data per fetch data (for loop)
+        let [limitMin, limitMax]: [number, number] = [0, 0]
+        // loop for limit
+        for(let i=0; i<10; i++) {
+            limitMin = (i / 10) * baseLimit
+            limitMax = ((i+1) / 10) * baseLimit - 1
+            // query object for select all
+            const queryObjectSelect: IQuerySelect = {
+                table: 'abc_words',
+                selectColumn: this.dq.queryColumnSelector('words', 23),
+                whereColumn: 'category',
+                whereValue: payload[0].category,
+                limit: { min: limitMin, max: limitMax }
+            }
+            // select data
+            const selectAllResponse = await this.dq.selectAll(queryObjectSelect) 
+            // failed to select data
+            if(selectAllResponse.data === null) {
+                return {
+                    status: 500,
+                    message: selectAllResponse.error,
+                    data: [] as any[]
+                } as IResponse
+            }
+            // success to select data
+            else if(selectAllResponse.error === null) {
+                // loop payload
+                for(let key of Object.keys(objPayload)) {
+                    const selectRes: selectResType[] = selectAllResponse.data
+                    // then match the string with payload.word
+                    const matchSelectRes = () => { 
+                        // split payload word
+                        const keyWords = key.split(', ')
+                        return this.ignoreExistWords(selectRes, keyWords)
+                    }
+                    // push number to obj payload 
+                    matchSelectRes() 
+                        // word doesnt exist push 0
+                        ? (objPayload[key] as string[]).push('0') 
+                        // word exist push 1
+                        : (objPayload[key] as string[]).push('1')
+                }
+                // if retrieved data length < 100, break the loop
+                if(selectAllResponse.data.length < limitMax) {
+                    // join each obj payload value
+                    for(let key of Object.keys(objPayload)) {
+                        objPayload[key] = (objPayload[key] as string[]).join('')
+                        // only push to temp payload if value === 0
+                        // 0 means nothing match in database after all the loops
+                        if(+objPayload[key] === 0) {
+                            // then insert to the new payload
+                            tempPayload.push({ category: payload[0].category, word: key })
+                        }
+                    } 
+                    break
+                }
+            }
+        }
+        // return temp insert payload
+        return tempPayload
+    }
+
     /**
      * @description ignore words that already exist in database
      * @param selectRes payload from SELECT query
@@ -183,7 +209,7 @@ export class WordsRepo {
         const selectResWords = selectRes.map(v => { return v.word }).join(', ')
         // match each word in array
         const matching = words.map(v => { 
-            if(selectResWords.match(v) === null)
+            if(selectResWords.match(v) === null) 
                 return v
         }).filter(i=>i).join(', ')
         // check the length bfore return 
