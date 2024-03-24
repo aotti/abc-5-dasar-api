@@ -1,96 +1,89 @@
 import { Request, Response } from "express";
 import { DatabaseQueries } from "../lib/DatabaseQueries"
-import { IQueryInsert, IQuerySelect, IRequestGetWords, IRequestInsertWord, IResponse, selectResType } from "../lib/types"
+import { IQueryInsert, IQuerySelect, IRequestGetWords, IRequestInsertWord, IResponse, WordSelectResType } from "../lib/types"
+import { Respond } from "../lib/Respond";
+import { RepoHelper } from "../lib/RepoHelper";
 
-export class WordsRepo {
+export class WordRepo {
     private dq = new DatabaseQueries()
+    private respond = new Respond()
+    private repoHelper = new RepoHelper()
 
     async getWords(req: Request, res: Response) {
-        const { action, payload }: IRequestGetWords = req.body
-        // check post action
-        if(action !== 'get words') {
-            return {
-                status: 401,
-                message: 'action is not allowed',
-                data: [] as any[]
-            }
-        }
-        // check if the payload is empty string
-        if(payload.column === '' || payload.value === '') {
-            return {
-                status: 401,
-                message: 'payload cannot be empty',
-                data: [] as any[]
-            }
-        }
-        // create query object for query execute
-        const queryObject: IQuerySelect = {
-            table: 'abc_words',
-            selectColumn: this.dq.queryColumnSelector('words', 123),
-            whereColumn: payload.column,
-            whereValue: payload.value
+        // var for return
+        let returnObject
+        // destructure req.params
+        const param: IRequestGetWords['payload'] = {
+            column: Object.keys(req.params)[0],
+            value: req.params.category
         }
         // handle promise
         try {
+            // create query object for query execute
+            const queryObject: IQuerySelect = {
+                table: 'abc_words',
+                selectColumn: this.dq.queryColumnSelector('words', 123),
+                whereColumn: param.column,
+                whereValue: (param.value as string).replace('-', ' ')
+            }
             // select all data with selected category
-            const selectAllResponse = await this.dq.selectAll(queryObject)
+            const selectAllResponse = await this.dq.select(queryObject)
             // failed to select data
             if(selectAllResponse.data === null) {
-                return {
-                    status: 500,
-                    message: selectAllResponse.error,
-                    data: [] as any[]
-                } as IResponse
+                returnObject = this.respond.createObject(500, selectAllResponse.error, []) 
             }
             // success to select data
             else if(selectAllResponse.error === null) {
-                return {
-                    status: 200,
-                    message: `success ${action}`,
-                    data: selectAllResponse.data
-                } as IResponse
+                returnObject = this.respond.createObject(200, `success get words`, selectAllResponse.data) 
             }
+            // return response
+            return returnObject as IResponse
         } catch (err) {
-            console.log(`wordsRepo getWords: ${err}`)
+            console.log(`error WordRepo getWords`)
+            // return response
+            returnObject = this.respond.createObject(500, err as string, [])
+            return returnObject as IResponse
         }
     }
 
     async insertWords(req: Request, res: Response) {
+        // var for return
+        let returnObject: IResponse
+        // destructure req.body
         const { action, payload }: IRequestInsertWord = req.body
-        // check post action
-        if(action !== 'insert words') {
-            return {
-                status: 401,
-                message: 'action is not allowed',
-                data: [] as any[]
-            }
+        // data for authentication
+        const authData = {
+            clientAction: action,
+            authAction: 'insert words',
+            payloadKeys: payload.map(v => { return Object.keys(v) })[0]
+        }
+        // check payload
+        const [authStatus, errorMessage] = this.repoHelper.checkReqBody(authData)
+        if(authStatus) {
+            // payload doesnt pass the authentication
+            return errorMessage as IResponse
         }
         // prevent insert data if theres more than 1 category
         const countCategory = payload.map(v => { return v.category }).filter((v, i, arr) => { return arr.indexOf(v) === i })
         if(countCategory.length > 1) {
-            return {
-                status: 401,
-                message: 'only 1 category is allowed per insert',
-                data: [] as any[]
-            }
+            return returnObject = this.respond.createObject(401, 'only 1 category is allowed per insert', []) 
         }
         // check for unique words
         const [unique, words] = this.checkUniqueWords(payload)
         if(unique === false) {
-            return {
-                status: 401,
-                message: `the word(s) [${words}] has a duplicate!`,
-                data: [] as any[]
-            }
+            return returnObject = this.respond.createObject(401, `the word(s) [${words}] has a duplicate!`, []) 
         }
         // handle promise
         try {
+            // trying to connect db
             const matchWords = await this.matchWords(payload)
+            // fail to connect db
             if((matchWords as IResponse).status) return matchWords as IResponse
             // filtered payload for insertColumn
             const insertPayload = matchWords as {category: string, word: string}[]
+            // create query object for query execute
             // query object for insert
-            const queryObjectInsert: Omit<IQueryInsert, 'whereColumn' | 'whereValue'> = {
+            const queryObject: Omit<IQueryInsert, 'whereColumn' | 'whereValue'> = {
                 table: 'abc_words',
                 selectColumn: this.dq.queryColumnSelector('words', 123),
                 get insertColumn() {
@@ -100,29 +93,35 @@ export class WordsRepo {
                 }
             }
             // insert data
-            const insertResponse = await this.dq.insert(queryObjectInsert)
+            const insertResponse = await this.dq.insert(queryObject)
             // failed to insert data
             if(insertResponse.data === null) {
-                return {
-                    status: 500,
-                    message: insertResponse.error,
-                    data: [] as any[]
-                } as IResponse
+                returnObject = this.respond.createObject(500, insertResponse.error, []) 
             }
             // success to insert data
             else if(insertResponse.error === null) {
-                return {
-                    status: 200,
-                    message: `success ${action} (${insertResponse.data.length} of ${payload.length} words)`,
-                    data: insertResponse.data
-                } as IResponse
+                const successText = `success ${action} (${insertResponse.data.length} of ${payload.length} words)`
+                // set response
+                returnObject = this.respond.createObject(200, successText, insertResponse.data) 
             }
+            // return response
+            // this var definitely will have value
+            return returnObject!
         } catch (err) {
-            console.log(`wordsRepo insertWords: ${err}`)
+            console.log(`error WordRepo insertWords`)
+            // return response
+            returnObject = this.respond.createObject(500, err as string, [])
+            return returnObject
         }
     }
 
     // ~~ utility methods ~~
+    /**
+     * @description match words from client payload with words from database 
+     * to make sure the word from client is all unique
+     * @param payload payload from client
+     * @returns error response | filtered payload (object)
+     */
     private async matchWords(payload: {category: string, word: string}[]) {
         // object to make sure all word pass until last loop
         const objPayload: {[key: string]: string[] | string} = {}
@@ -141,8 +140,9 @@ export class WordsRepo {
         for(let i=0; i<10; i++) {
             limitMin = (i / 10) * baseLimit
             limitMax = ((i+1) / 10) * baseLimit - 1
+            // create query object for query execute
             // query object for select all
-            const queryObjectSelect: IQuerySelect = {
+            const queryObject: IQuerySelect = {
                 table: 'abc_words',
                 selectColumn: this.dq.queryColumnSelector('words', 23),
                 whereColumn: 'category',
@@ -150,7 +150,7 @@ export class WordsRepo {
                 limit: { min: limitMin, max: limitMax }
             }
             // select data
-            const selectAllResponse = await this.dq.selectAll(queryObjectSelect) 
+            const selectAllResponse = await this.dq.select(queryObject) 
             // failed to select data
             if(selectAllResponse.data === null) {
                 return {
@@ -163,7 +163,7 @@ export class WordsRepo {
             else if(selectAllResponse.error === null) {
                 // loop payload
                 for(let key of Object.keys(objPayload)) {
-                    const selectRes: selectResType[] = selectAllResponse.data
+                    const selectRes: WordSelectResType[] = selectAllResponse.data
                     // then match the string with payload.word
                     const matchSelectRes = () => { 
                         // split payload word
@@ -203,7 +203,7 @@ export class WordsRepo {
      * @param words word from client 
      * @returns string or null
      */
-    private ignoreExistWords(selectRes: selectResType[], words: string[]) {
+    private ignoreExistWords(selectRes: WordSelectResType[], words: string[]) {
         // main comparison
         // join all select response 'word' into string
         const selectResWords = selectRes.map(v => { return v.word }).join(', ')

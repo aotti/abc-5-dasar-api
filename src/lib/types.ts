@@ -11,7 +11,6 @@ interface IResponse {
 type PG_PromiseType = Promise<{ data: any[] | null, error: PostgrestError | null }>
 
 // ~~ DATABASE QUERIES ~~
-// type qbMethodType = dbSelectType | dbInsertType | dbUpdateType
 
 // insert / update column 
 type IUWordsType = {
@@ -19,6 +18,12 @@ type IUWordsType = {
     word: string;
 }
 
+type IUPlayersType = {
+    id: number;
+    username: string;
+}
+
+// queries
 interface IQueryBuilder {
     table: string;
     selectColumn: string | number;
@@ -33,7 +38,7 @@ interface IQuerySelect extends IQueryBuilder {
 }
 
 interface IQueryInsert extends IQueryBuilder {
-    get insertColumn(): IUWordsType | IUWordsType[];
+    get insertColumn(): IUWordsType | IUWordsType[] | IUPlayersType;
 }
 
 interface IQueryUpdate extends IQueryBuilder {
@@ -42,11 +47,18 @@ interface IQueryUpdate extends IQueryBuilder {
     get updateColumn(): IUWordsType;
 }
 
-// ~~ WORDS REPO ~~
+// ~~ REQUEST ~~
 interface IRequest {
     action: string; 
 }
 
+type AuthPayloadType = {
+    clientAction: string;
+    authAction: string;
+    payloadKeys: string[];
+}
+
+// ~~ WORD REPO ~~
 interface IRequestGetWords extends IRequest {
     payload: {
         column: string;
@@ -60,21 +72,52 @@ interface IRequestInsertWord extends IRequest {
     ]
 }
 
-type selectResType = {
+type WordSelectResType = {
     id?: number;
     category?: number;
     word?: number;
 }
 
+// ~~ PROFILE REPO ~~
+interface IProfile {
+    player_id?: {
+        id: number;
+        username: string;
+    }
+}
+
+interface IProfileSelect extends IProfile {
+    id: number;
+    username: string;
+    game_played: number;
+    words_used: number;
+}
+
+// ~~ REGISTER REPO ~~
+interface IRequestRegisterPlayer extends IRequest {
+    payload: {
+        id: number;
+        username: string;
+    }
+}
+
 export { 
+    // response
+    IResponse,
+    // query
     PG_PromiseType,
     IQueryBuilder,
     IQuerySelect,
     IQueryInsert,
     IQueryUpdate,
-    IResponse,
+    // request
     IRequest,
+    AuthPayloadType,
+    // word repo
     IRequestGetWords,
     IRequestInsertWord,
-    selectResType
+    WordSelectResType,
+    // profile
+    IProfileSelect,
+    IRequestRegisterPlayer
 }

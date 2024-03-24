@@ -3,7 +3,7 @@ import { IQueryBuilder, IQueryInsert, IQuerySelect, PG_PromiseType } from "./typ
 
 export class DatabaseQueries {
 
-    selectAll(queryObject: IQuerySelect): PG_PromiseType {
+    select(queryObject: IQuerySelect): PG_PromiseType {
         // select data
         const selectAllDataFromDB = async () => {
             // default limit
@@ -15,11 +15,17 @@ export class DatabaseQueries {
                 rangeMin = min; rangeMax = max
             }
             // run query
-            const {data, error} = await supabase.from(queryObject.table)
-                                .select(queryObject.selectColumn as string) // select columns
-                                .eq(queryObject.whereColumn as string, queryObject.whereValue) // where condition
-                                .range(rangeMin, rangeMax) // limit, how many data will be retrieved
-                                .order('id', {ascending: true}) // order data by..
+            const {data, error} = queryObject.whereColumn ?
+                                    await supabase.from(queryObject.table)
+                                    .select(queryObject.selectColumn as string) // select columns
+                                    .eq(queryObject.whereColumn as string, queryObject.whereValue) // where condition
+                                    .range(rangeMin, rangeMax) // limit, how many data will be retrieved
+                                    .order('id', {ascending: true}) // order data by..
+                                    :
+                                    await supabase.from(queryObject.table)
+                                    .select(queryObject.selectColumn as string) // select columns
+                                    .range(rangeMin, rangeMax) // limit, how many data will be retrieved
+                                    .order('id', {ascending: true}) // order data by..
             return {data: data, error: error}
         }
         return selectAllDataFromDB()
@@ -47,8 +53,8 @@ export class DatabaseQueries {
      * - table words = select 'id, category, word' = 123; select 'id, word' = 13;
      * 
      * list of column:
-     * - players - ... 
-     * - profiles - ...
+     * - players - id, username
+     * - profiles - player_id, game_played, words_used
      * - words - id, category, word
      * - rooms - ...
      * - rounds - ...
@@ -58,11 +64,13 @@ export class DatabaseQueries {
         const selectedColumns = []
         // for players table
         if(type === 'players') {
-
+            const pickerList: string[] = ['id', 'username']
+            selectedColumns.push(columnPicker(pickerList))
         }
         // for profiles table
         else if(type === 'profiles') {
-            
+            const pickerList: string[] = ['player_id(id, username)', 'game_played', 'words_used']
+            selectedColumns.push(columnPicker(pickerList))
         }
         // for words table
         else if(type === 'words') {

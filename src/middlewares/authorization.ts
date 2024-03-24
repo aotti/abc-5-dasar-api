@@ -21,4 +21,17 @@ export class Authorization {
         // if the uuid match, run the controller
         next()
     }
+
+    // ### TAMBAH MIDDLEWARE UNTUK CEK APAKAH PLAYER SUDAH REGISTER?
+    // ### JIKA BLM REGISTER, BATASI HAK AKSES KE API
+    // ### UNTUK START & JOIN ROUTES
+    auth = (req: Request, res: Response, next: NextFunction) => {
+        
+    }
+
+    // ### CEK PANJANG ID SAAT REGISTER
+    // ### LENGTH = 18~19 NUMBERS
+    checkId = (req: Request, res: Response, next: NextFunction) => {
+
+    }
 }
