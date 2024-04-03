@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { DatabaseQueries } from "../lib/DatabaseQueries";
 import { Respond } from "../lib/Respond";
-import { AuthPayloadType, IQueryInsert, IRequestRegisterPlayer, IResponse } from "../lib/types";
+import { IAuthClientReq, IQueryInsert, IRequestRegisterPlayer, IResponse } from "../lib/types";
 import { RepoHelper } from "../lib/RepoHelper";
 
 export class RegisterRepo {
@@ -15,16 +15,17 @@ export class RegisterRepo {
         // destructure req.body
         const { action, payload }: IRequestRegisterPlayer = req.body
         // data for payload authentication
-        const authData: AuthPayloadType = {
-            clientAction: action,
-            authAction: 'register player',
-            payloadKeys: Object.keys(payload)
+        const authData: IAuthClientReq = {
+            reqMethod: req.method,
+            authKey: 'register player',
+            clientInputs: req.body
+            // payloadKeys: Object.keys(payload)
         }
-        // check payload
-        const [authStatus, errorMessage] = this.repoHelper.checkReqBody(authData)
+        // check payload 
+        const [authStatus, errorMessage] = this.repoHelper.checkClientInputs(authData) as [boolean, IResponse | null]
         if(authStatus) {
             // payload doesnt pass the authentication
-            returnObject = errorMessage as IResponse
+            return returnObject = errorMessage as IResponse
         }
         // handle promise
         try {
@@ -44,15 +45,16 @@ export class RegisterRepo {
             }
             // success to insert data
             else if(insertResponse.error === null) {
-                returnObject = this.respond.createObject(200, 'success register player', insertResponse.data) 
+                returnObject = this.respond.createObject(200, `success ${action}`, insertResponse.data) 
             }
             // return response
             // this var definitely will have value
             return returnObject!
-        } catch (err) {
+        } catch (err: any) {
             console.log(`error RegisterRepo player`)
+            console.log(err)
             // return response
-            returnObject = this.respond.createObject(500, err as string, [])
+            returnObject = this.respond.createObject(500, err.message, [])
             return returnObject
         }
     }

@@ -15,17 +15,19 @@ export class DatabaseQueries {
                 rangeMin = min; rangeMax = max
             }
             // run query
-            const {data, error} = queryObject.whereColumn ?
-                                    await supabase.from(queryObject.table)
-                                    .select(queryObject.selectColumn as string) // select columns
-                                    .eq(queryObject.whereColumn as string, queryObject.whereValue) // where condition
-                                    .range(rangeMin, rangeMax) // limit, how many data will be retrieved
-                                    .order('id', {ascending: true}) // order data by..
-                                    :
-                                    await supabase.from(queryObject.table)
-                                    .select(queryObject.selectColumn as string) // select columns
-                                    .range(rangeMin, rangeMax) // limit, how many data will be retrieved
-                                    .order('id', {ascending: true}) // order data by..
+            const {data, error} = queryObject.function ? // is function exist
+                                    await supabase.rpc(queryObject.function) // run function
+                                    : queryObject.whereColumn ?
+                                        await supabase.from(queryObject.table)
+                                        .select(queryObject.selectColumn as string) // select columns
+                                        .eq(queryObject.whereColumn as string, queryObject.whereValue) // where condition
+                                        .range(rangeMin, rangeMax) // limit, how many data will be retrieved
+                                        .order('id', {ascending: true}) // order data by..
+                                        :
+                                        await supabase.from(queryObject.table)
+                                        .select(queryObject.selectColumn as string) // select columns
+                                        .range(rangeMin, rangeMax) // limit, how many data will be retrieved
+                                        .order('id', {ascending: true}) // order data by..
             return {data: data, error: error}
         }
         return selectAllDataFromDB()

@@ -15,6 +15,7 @@ const registerController = new RegisterController()
 // get
 gameRouter
     // word
+    .get('/word/categories', wordController.getCategories)
     .get('/word/:category', wordController.getWords)
     // profile
     .get('/profile/:player_id', profileController.getProfile)

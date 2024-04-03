@@ -18,35 +18,43 @@ export class ProfileRepo {
             const queryObject: IQuerySelect = {
                 table: 'abc_profiles',
                 selectColumn: this.dq.queryColumnSelector('profiles', 123),
-                whereColumn: 'id',
+                whereColumn: 'player_id',
                 whereValue: player_id
             }
             // select data from database
-            const selectOneResponse = await this.dq.select(queryObject)
+            const selectResponse = await this.dq.select(queryObject)
             // failed to retrieve data
-            if(selectOneResponse.data === null) {
-                returnObject = this.respond.createObject(500, selectOneResponse.error, []) 
+            if(selectResponse.data === null) {
+                returnObject = this.respond.createObject(500, selectResponse.error, []) 
             }
             // success to retrieved data
-            else if(selectOneResponse.error === null) {
-                const selectOneRes: IProfileSelect = selectOneResponse.data[0]
-                // new data for response
-                const newData: IProfileSelect = {
-                    id: selectOneRes.player_id?.id as number,
-                    username: selectOneRes.player_id?.username as string,
-                    game_played: selectOneRes.game_played,
-                    words_used: selectOneRes.words_used
+            else if(selectResponse.error === null) {
+                // data doesnt exist
+                if(selectResponse.data.length === 0) {
+                    // set response
+                    returnObject = this.respond.createObject(200, 'player doesnt exist', [])
                 }
-                // set response
-                returnObject = this.respond.createObject(200, `success get profile`, [newData])
+                else {
+                    // data exist
+                    const selectOneRes: IProfileSelect = selectResponse.data[0]
+                    // new data for response
+                    const newData: IProfileSelect = {
+                        username: selectOneRes.player_id?.username as string,
+                        game_played: selectOneRes.game_played,
+                        words_used: selectOneRes.words_used
+                    }
+                    // set response
+                    returnObject = this.respond.createObject(200, `success get profile`, [newData])
+                }
             }
             // return response
             // this var definitely will have value
             return returnObject!
-        } catch (err) {
+        } catch (err: any) {
             console.log(`error ProfileRepo getProfile`)
+            console.log(err)
             // return response
-            returnObject = this.respond.createObject(500, err as string, [])
+            returnObject = this.respond.createObject(500, err.message, [])
             return returnObject
         }
     }

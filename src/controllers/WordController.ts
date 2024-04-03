@@ -6,8 +6,14 @@ export class WordController {
     private wordRepo = new WordRepo()
     private respond = new Respond()
 
+    getCategories = (req: Request, res: Response) => {
+        this.wordRepo.getCategories(req, res)
+            .then(result => {
+                return this.respond.send(res, result)
+            })
+    }
+
     getWords = (req: Request, res: Response) => {
-        console.log(req.params);
         this.wordRepo.getWords(req, res)
             .then(result => {
                 return this.respond.send(res, result)

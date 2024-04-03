@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { DatabaseQueries } from "../lib/DatabaseQueries"
-import { IQueryInsert, IQuerySelect, IRequestGetWords, IRequestInsertWord, IResponse, WordSelectResType } from "../lib/types"
+import { IQueryInsert, IQuerySelect, IParamsGetWords, IRequestInsertWord, IResponse, WordSelectResType, IAuthClientReq } from "../lib/types"
 import { Respond } from "../lib/Respond";
 import { RepoHelper } from "../lib/RepoHelper";
 
@@ -9,11 +9,41 @@ export class WordRepo {
     private respond = new Respond()
     private repoHelper = new RepoHelper()
 
+    async getCategories(req: Request, res: Response) {
+        // var for return
+        let returnObject
+        // handle promise
+        try {
+            // create query object for query execute
+            const queryObject: Pick<IQuerySelect, 'function'> = {
+                function: 'get_categories'
+            }
+            // select data from database
+            const selectResponse = await this.dq.select(queryObject as IQuerySelect)
+            // failed to retrieved data
+            if(selectResponse.data === null) {
+                returnObject = this.respond.createObject(500, selectResponse.error, []) 
+            }
+            // success to retrieved data
+            else if(selectResponse.error === null) {
+                // set response
+                returnObject = this.respond.createObject(200, `success get categories`, selectResponse.data)
+            }
+            return returnObject as IResponse
+        } catch (err: any) {
+            console.log(`error WordRepo getCategories`)
+            // return response
+            returnObject = this.respond.createObject(500, err as string, [])
+            return returnObject as IResponse
+        }
+    }
+
     async getWords(req: Request, res: Response) {
         // var for return
         let returnObject
         // destructure req.params
-        const param: IRequestGetWords['payload'] = {
+        // IParamsGetWords is extended from IRequest
+        const params: IParamsGetWords = {
             column: Object.keys(req.params)[0],
             value: req.params.category
         }
@@ -23,18 +53,18 @@ export class WordRepo {
             const queryObject: IQuerySelect = {
                 table: 'abc_words',
                 selectColumn: this.dq.queryColumnSelector('words', 123),
-                whereColumn: param.column,
-                whereValue: (param.value as string).replace('-', ' ')
+                whereColumn: params.column,
+                whereValue: (params.value as string).replace('-', ' ')
             }
             // select all data with selected category
-            const selectAllResponse = await this.dq.select(queryObject)
+            const selectResponse = await this.dq.select(queryObject)
             // failed to select data
-            if(selectAllResponse.data === null) {
-                returnObject = this.respond.createObject(500, selectAllResponse.error, []) 
+            if(selectResponse.data === null) {
+                returnObject = this.respond.createObject(500, selectResponse.error, []) 
             }
             // success to select data
-            else if(selectAllResponse.error === null) {
-                returnObject = this.respond.createObject(200, `success get words`, selectAllResponse.data) 
+            else if(selectResponse.error === null) {
+                returnObject = this.respond.createObject(200, `success get words`, selectResponse.data) 
             }
             // return response
             return returnObject as IResponse
@@ -52,13 +82,14 @@ export class WordRepo {
         // destructure req.body
         const { action, payload }: IRequestInsertWord = req.body
         // data for authentication
-        const authData = {
-            clientAction: action,
-            authAction: 'insert words',
-            payloadKeys: payload.map(v => { return Object.keys(v) })[0]
+        const authData: IAuthClientReq = {
+            reqMethod: req.method,
+            authKey: 'insert words',
+            clientInputs: req.body
+            // clientInputs: payload.map(v => { return Object.keys(v) })[0]
         }
         // check payload
-        const [authStatus, errorMessage] = this.repoHelper.checkReqBody(authData)
+        const [authStatus, errorMessage] = this.repoHelper.checkClientInputs(authData) as [boolean, IResponse | null]
         if(authStatus) {
             // payload doesnt pass the authentication
             return errorMessage as IResponse
@@ -107,10 +138,11 @@ export class WordRepo {
             // return response
             // this var definitely will have value
             return returnObject!
-        } catch (err) {
+        } catch (err: any) {
             console.log(`error WordRepo insertWords`)
+            console.log(err)
             // return response
-            returnObject = this.respond.createObject(500, err as string, [])
+            returnObject = this.respond.createObject(500, err.message, [])
             return returnObject
         }
     }
@@ -150,20 +182,20 @@ export class WordRepo {
                 limit: { min: limitMin, max: limitMax }
             }
             // select data
-            const selectAllResponse = await this.dq.select(queryObject) 
+            const selectResponse = await this.dq.select(queryObject) 
             // failed to select data
-            if(selectAllResponse.data === null) {
+            if(selectResponse.data === null) {
                 return {
                     status: 500,
-                    message: selectAllResponse.error,
+                    message: selectResponse.error,
                     data: [] as any[]
                 } as IResponse
             }
             // success to select data
-            else if(selectAllResponse.error === null) {
+            else if(selectResponse.error === null) {
                 // loop payload
                 for(let key of Object.keys(objPayload)) {
-                    const selectRes: WordSelectResType[] = selectAllResponse.data
+                    const selectRes: WordSelectResType[] = selectResponse.data
                     // then match the string with payload.word
                     const matchSelectRes = () => { 
                         // split payload word
@@ -178,7 +210,7 @@ export class WordRepo {
                         : (objPayload[key] as string[]).push('1')
                 }
                 // if retrieved data length < 100, break the loop
-                if(selectAllResponse.data.length < limitMax) {
+                if(selectResponse.data.length < limitMax) {
                     // join each obj payload value
                     for(let key of Object.keys(objPayload)) {
                         objPayload[key] = (objPayload[key] as string[]).join('')
