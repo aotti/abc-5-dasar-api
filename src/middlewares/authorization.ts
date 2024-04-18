@@ -28,10 +28,4 @@ export class Authorization {
     auth = (req: Request, res: Response, next: NextFunction) => {
         
     }
-
-    // ### CEK PANJANG ID SAAT REGISTER
-    // ### LENGTH = 18~19 NUMBERS
-    checkId = (req: Request, res: Response, next: NextFunction) => {
-
-    }
 }

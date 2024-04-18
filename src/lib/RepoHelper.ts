@@ -30,13 +30,15 @@ export class RepoHelper {
         return [false, null]
     }
 
+    // match payload keys with determined keys
+    // check if payload value is empty
     private checkReqBody(authKey: string, action: string | null, payload: IAuthClientReq['clientInputs']['payload'] | null): repoHelperInputsType {
         if(action === null || payload === null) {
             const message: IResponse = this.respond.createObject(400, 'action / payload is null', [])
             return [true, message]
         }
         // exclude object type in union IAuthClientReq
-        type IAuthClientReqArray = Exclude<IAuthClientReq['clientInputs']['payload'], { id: number }>
+        type IAuthClientReqArray = Exclude<IAuthClientReq['clientInputs']['payload'], { id: string }>
         type IAuthClientReqObject = Exclude<IAuthClientReq['clientInputs']['payload'], [{ category: string }]>
         // get payload keys
         const payloadKeys = (payload as IAuthClientReqArray).length != null 
@@ -52,7 +54,7 @@ export class RepoHelper {
             const message: IResponse = this.respond.createObject(400, 'payloadKeys is empty', [])
             return [true, message]
         }
-        // loop the keys 
+        // loop the payload keys 
         for(let key of payloadKeys) {
             // check the keys
             switch(true) {
@@ -65,25 +67,21 @@ export class RepoHelper {
                     return [true, message]
             }
         }
+        // loop payload key values
+        for(let [key, value] of Object.entries(payload as IAuthClientReqObject)) {
+            // check typeof payload key
+            const isPayloadValueTrue = this.checkPayloadKeysValue(authKey, key, value)
+            if(isPayloadValueTrue) {
+                // return response if type doesnt match
+                const message: IResponse = this.respond.createObject(400, `'${key}' wrong type of value!`, [])
+                return [true, message]
+            }
+        }
         // return null message
         return [false, null]
     }
 
-    // ~~ side method ~~
-    private matchPayloadKeys(authKey: string, key: string) {
-        // checking action
-        switch(authKey) {
-            case 'register player':
-                // using || operator is possible cuz this method is used with looping
-                // so it will check the key 2x
-                return key === 'id' || key === 'username' ? true : false
-            case 'insert words':
-                return key === 'category' || key === 'word' ? true : false
-            default:
-                return false
-        }
-    }
-
+    // match req.body keys with determined body keys
     private matchBodyKeys(clientInputs: IAuthClientReq['clientInputs']): repoHelperInputsType {
         // get body keys
         const bodyKeys = Object.keys(clientInputs)
@@ -96,6 +94,40 @@ export class RepoHelper {
             default:
                 const message: IResponse = this.respond.createObject(400, 'request object is null / doesnt match!', [])
                 return [true, message]
+        }
+    }
+
+    // ~~ side method ~~
+    private matchPayloadKeys(authKey: string, key: string) {
+        // checking action
+        switch(authKey) {
+            case 'register player':
+                // using || operator is possible cuz this method is used with looping
+                // so it will check the key 2x
+                return key === 'id' || key === 'username' ? true : false
+            case 'insert words':
+                return key === 'category' || key === 'word' ? true : false
+            case 'create room':
+                return key === 'name' || key === 'password' || key === 'num_players' || key === 'max_players' || key === 'rules'
+                    ? true : false
+            default:
+                return false
+        }
+    }
+
+    private checkPayloadKeysValue(authKey: string, key: string, value: string | number) {
+        switch(authKey) {
+            case 'register player':
+                // check is ID number 
+                if(key === 'id') {
+                    return isNaN(value as number) ? true : false
+                }
+                // and USERNAME length <= 30
+                else if(key === 'username') {
+                    return (value as string).length > 30 ? true : false
+                }
+            default:
+                return false
         }
     }
 }

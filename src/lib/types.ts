@@ -19,8 +19,16 @@ type IUWordsType = {
 }
 
 type IUPlayersType = {
-    id: number;
+    id: string;
     username: string;
+}
+
+type IURoomType = {
+    name: string;
+    password?: string | null;
+    num_players: number;
+    max_players: number;
+    rules: string;
 }
 
 // queries
@@ -39,13 +47,25 @@ interface IQuerySelect extends IQueryBuilder {
 }
 
 interface IQueryInsert extends IQueryBuilder {
-    get insertColumn(): IUWordsType | IUWordsType[] | IUPlayersType;
+    get insertColumn(): 
+        // word
+        IUWordsType | IUWordsType[] | 
+        // player
+        IUPlayersType |
+        // room
+        IURoomType;
 }
 
 interface IQueryUpdate extends IQueryBuilder {
     whereColumn: string;
     whereValue: string | number;
-    get updateColumn(): IUWordsType;
+    get updateColumn(): 
+        // word
+        IUWordsType | IUWordsType[] | 
+        // player
+        IUPlayersType |
+        // room
+        IURoomType;
 }
 
 // ~~ REQUEST ~~
@@ -76,7 +96,10 @@ interface IParamsGetWords {
 
 interface IRequestInsertWord extends IRequest {
     payload: [
-        { category: string, word: string }
+        { 
+            category: string, 
+            word: string 
+        }
     ]
 }
 
@@ -104,8 +127,20 @@ interface IProfileSelect extends IProfile {
 // ~~ REGISTER REPO ~~
 interface IRequestRegisterPlayer extends IRequest {
     payload: {
-        id: number;
+        id: string;
         username: string;
+    }
+}
+
+// ~~ ROOM REPO ~~
+interface IRequestCreateRoom extends IRequest {
+    payload: {
+        // name, password, num_players, max_players, rules
+        name: string;
+        password: string | null;
+        num_players: number;
+        max_players: number;
+        rules: string;
     }
 }
 
@@ -131,6 +166,8 @@ export {
     // profile
     IProfileSelect,
     IRequestRegisterPlayer,
+    // room
+    IRequestCreateRoom,
     // repo helper
     repoHelperInputsType
 }

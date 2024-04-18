@@ -86,13 +86,12 @@ export class WordRepo {
             reqMethod: req.method,
             authKey: 'insert words',
             clientInputs: req.body
-            // clientInputs: payload.map(v => { return Object.keys(v) })[0]
         }
         // check payload
         const [authStatus, errorMessage] = this.repoHelper.checkClientInputs(authData) as [boolean, IResponse | null]
         if(authStatus) {
             // payload doesnt pass the authentication
-            return errorMessage as IResponse
+            return returnObject = errorMessage as IResponse
         }
         // prevent insert data if theres more than 1 category
         const countCategory = payload.map(v => { return v.category }).filter((v, i, arr) => { return arr.indexOf(v) === i })

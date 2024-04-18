@@ -18,6 +18,7 @@ export class DatabaseQueries {
             const {data, error} = queryObject.function ? // is function exist
                                     await supabase.rpc(queryObject.function) // run function
                                     : queryObject.whereColumn ?
+                                        // run normal query
                                         await supabase.from(queryObject.table)
                                         .select(queryObject.selectColumn as string) // select columns
                                         .eq(queryObject.whereColumn as string, queryObject.whereValue) // where condition
@@ -58,7 +59,7 @@ export class DatabaseQueries {
      * - players - id, username
      * - profiles - player_id, game_played, words_used
      * - words - id, category, word
-     * - rooms - ...
+     * - rooms - name, password, num_players, max_players, rules
      * - rounds - ...
      */
     queryColumnSelector(type: string, columns: number) {
@@ -81,7 +82,8 @@ export class DatabaseQueries {
         }
         // for rooms table
         else if(type === 'rooms') {
-            
+            const pickerList: string[] = ['name', 'password', 'num_players', 'max_players', 'rules']
+            selectedColumns.push(columnPicker(pickerList))
         }
         // for rounds table
         else if(type === 'rounds') {

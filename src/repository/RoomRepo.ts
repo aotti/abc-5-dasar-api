@@ -1,26 +1,26 @@
 import { Request, Response } from "express";
-import { DatabaseQueries } from "../lib/DatabaseQueries";
+import { DatabaseQueries } from "../lib/DatabaseQueries"
 import { Respond } from "../lib/Respond";
-import { IAuthClientReq, IQueryInsert, IRequestRegisterPlayer, IResponse } from "../lib/types";
+import { IAuthClientReq, IQueryInsert, IRequestCreateRoom, IResponse } from "../lib/types";
 import { RepoHelper } from "../lib/RepoHelper";
 
-export class RegisterRepo {
+export class RoomRepo {
     private dq = new DatabaseQueries()
     private respond = new Respond()
     private repoHelper = new RepoHelper()
 
-    async player(req: Request, res: Response) {
+    async createRoom(req: Request, res: Response) {
         // var for return
         let returnObject: IResponse
         // destructure req.body
-        const { action, payload }: IRequestRegisterPlayer = req.body
-        // data for payload authentication
+        const { action, payload }: IRequestCreateRoom = req.body
+        // data for authentication
         const authData: IAuthClientReq = {
             reqMethod: req.method,
-            authKey: 'register player',
+            authKey: 'create room',
             clientInputs: req.body
         }
-        // check payload 
+        // check payload
         const [authStatus, errorMessage] = this.repoHelper.checkClientInputs(authData) as [boolean, IResponse | null]
         if(authStatus) {
             // payload doesnt pass the authentication
@@ -30,8 +30,8 @@ export class RegisterRepo {
         try {
             // query object for insert
             const queryObject: Omit<IQueryInsert, 'whereColumn' | 'whereValue'> = {
-                table: 'abc_players',
-                selectColumn: this.dq.queryColumnSelector('players', 12),
+                table: 'abc_rooms',
+                selectColumn: this.dq.queryColumnSelector('rooms', 1245),
                 get insertColumn() {
                     return payload
                 }
@@ -50,7 +50,7 @@ export class RegisterRepo {
             // this var definitely will have value
             return returnObject!
         } catch (err: any) {
-            console.log(`error RegisterRepo player`)
+            console.log(`error RoomRepo createRoom`)
             console.log(err)
             // return response
             returnObject = this.respond.createObject(500, err.message, [])
