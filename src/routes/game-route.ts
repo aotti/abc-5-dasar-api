@@ -27,8 +27,8 @@ gameRouter
     // word
     .post('/word/insert', authorization.uuid, wordController.insertWords)
     // register
-    .post('/register/player', registerController.player)
+    .post('/register/player', authorization.uuid, registerController.player)
     // room
-    .post('/room/create', roomController.createRoom)
+    .post('/room/create', authorization.auth, roomController.createRoom)
 
 export { gameRouter }

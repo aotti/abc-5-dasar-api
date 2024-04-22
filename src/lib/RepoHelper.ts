@@ -73,7 +73,7 @@ export class RepoHelper {
             const isPayloadValueTrue = this.checkPayloadKeysValue(authKey, key, value)
             if(isPayloadValueTrue) {
                 // return response if type doesnt match
-                const message: IResponse = this.respond.createObject(400, `'${key}' wrong type of value!`, [])
+                const message: IResponse = this.respond.createObject(400, `'${key}' data type / value doesnt match!`, [])
                 return [true, message]
             }
         }
@@ -124,6 +124,11 @@ export class RepoHelper {
                 }
                 // and USERNAME length <= 30
                 else if(key === 'username') {
+                    return (value as string).length > 30 ? true : false
+                }
+            case 'create room':
+                // check room name length
+                if(key === 'name') {
                     return (value as string).length > 30 ? true : false
                 }
             default:

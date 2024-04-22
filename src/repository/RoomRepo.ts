@@ -31,7 +31,7 @@ export class RoomRepo {
             // query object for insert
             const queryObject: Omit<IQueryInsert, 'whereColumn' | 'whereValue'> = {
                 table: 'abc_rooms',
-                selectColumn: this.dq.queryColumnSelector('rooms', 1245),
+                selectColumn: this.dq.queryColumnSelector('rooms', 12345),
                 get insertColumn() {
                     return payload
                 }
