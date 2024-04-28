@@ -63,7 +63,7 @@ interface IQuerySelect extends IQueryBuilder {
     function?: string;
 }
 
-interface IQueryInsert extends IQueryBuilder {
+interface IQueryInsert extends Omit<IQueryBuilder, 'whereColumn' | 'whereValue'> {
     get insertColumn(): 
         // word
         IUWordsType | IUWordsType[] | 
@@ -74,7 +74,9 @@ interface IQueryInsert extends IQueryBuilder {
         // room
         IUCreateRoomType |
         // rounds
-        IURoundsType | IURoundsType[];
+        IURoundsType | IURoundsType[] |
+        // word alt
+        WordAltDataType[];
 }
 
 interface IQueryUpdate extends IQueryBuilder {
@@ -177,8 +179,16 @@ interface IRequestInsertRound extends IRequest {
         game_rounds: number;
         player_id: string;
         answer_id: number; // word_id
+        answer_words: string; 
         answer_points: number; // words_correct
     }[]
+}
+
+// ~~ WORD ALT REPO ~~
+type WordAltDataType = {
+    player_id: string;
+    room_id: number;
+    word: string;
 }
 
 // ~~ REPO HELPER ~~
@@ -209,6 +219,8 @@ export {
     IRequestUpdateRoom,
     // round
     IRequestInsertRound,
+    // word alt
+    WordAltDataType,
     // repo helper
     repoHelperInputsType
 }

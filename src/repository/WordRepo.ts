@@ -51,22 +51,50 @@ export class WordRepo {
         }
         // handle promise
         try {
-            // create query object for query execute
-            const queryObject: IQuerySelect = {
-                table: 'abc_words',
-                selectColumn: this.dq.queryColumnSelector('words', 123),
-                whereColumn: params.column,
-                whereValue: params.value.replace('-', ' ')
-            }
-            // select all data with selected category
-            const selectResponse = await this.dq.select(queryObject)
-            // failed to select data
-            if(selectResponse.data === null) {
-                returnObject = this.respond.createObject(500, selectResponse.error, []) 
-            }
-            // success to select data
-            else if(selectResponse.error === null) {
-                returnObject = this.respond.createObject(200, `success get words`, selectResponse.data) 
+            // words container
+            const wordsContainer: {id: number; word: string}[] = []
+            // total limit to get data from db
+            const baseLimit = 1000
+            // limit (100) data per fetch data (for loop)
+            let [limitMin, limitMax]: [number, number] = [0, 0]
+            // loop for limit
+            for(let i=0; i<10; i++) {
+                // 0 * 1000 > 0.1 * 1000 > 0.2 * 1000
+                // 0 > 100 > 200
+                limitMin = (i / 10) * baseLimit
+                // 0.1 * 1000 > 0.2 * 1000 > 0.3 * 1000
+                // 100 > 200 > 300
+                limitMax = ((i+1) / 10) * baseLimit - 1
+                // create query object for query execute
+                const queryObject: IQuerySelect = {
+                    table: 'abc_words',
+                    selectColumn: this.dq.queryColumnSelector('words', 123),
+                    whereColumn: params.column,
+                    whereValue: params.value.replace('-', ' '),
+                    limit: { min: limitMin, max: limitMax }
+                }
+                // select all data with selected category
+                const selectResponse = await this.dq.select(queryObject)
+                // failed to select data
+                if(selectResponse.data === null) {
+                    // response message
+                    returnObject = this.respond.createObject(500, selectResponse.error, []) 
+                    break
+                }
+                // success to select data
+                else if(selectResponse.error === null) {
+                    // push data to words container
+                    const selectResData: {id: number; word: string}[] = selectResponse.data
+                    for(let data of selectResData) {
+                        wordsContainer.push(data)
+                    }
+                    // if retrieved data length < 100, break the loop
+                    if(selectResData.length < limitMax) {
+                        // response message
+                        returnObject = this.respond.createObject(200, `success get words`, wordsContainer) 
+                        break
+                    }
+                }
             }
             // return response
             return returnObject as IResponse
@@ -115,7 +143,7 @@ export class WordRepo {
             const insertPayload = matchWords as {category: string, word: string}[]
             // create query object for query execute
             // query object for insert
-            const queryObject: Omit<IQueryInsert, 'whereColumn' | 'whereValue'> = {
+            const queryObject: IQueryInsert = {
                 table: 'abc_words',
                 selectColumn: this.dq.queryColumnSelector('words', 123),
                 get insertColumn() {
@@ -212,8 +240,8 @@ export class WordRepo {
                 }
                 // if retrieved data length < 100, break the loop
                 if(selectResponse.data.length < limitMax) {
-                    // join each obj payload value
                     for(let key of Object.keys(objPayload)) {
+                        // join each obj payload value
                         objPayload[key] = (objPayload[key] as string[]).join('')
                         // only push to temp payload if value === 0
                         // 0 means nothing match in database after all the loops

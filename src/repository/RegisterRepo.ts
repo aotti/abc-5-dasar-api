@@ -28,8 +28,8 @@ export class RegisterRepo {
         }
         // handle promise
         try {
-            // query object for insert
-            const queryObject: Omit<IQueryInsert, 'whereColumn' | 'whereValue'> = {
+            // create query object for query execute
+            const queryObject: IQueryInsert = {
                 table: 'abc_players',
                 selectColumn: this.dq.queryColumnSelector('players', 12),
                 get insertColumn() {

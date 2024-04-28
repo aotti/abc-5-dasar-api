@@ -3,11 +3,13 @@ import { IAuthClientReq, IQueryInsert, IRequestInsertRound, IResponse } from "..
 import { Respond } from "../lib/Respond";
 import { DatabaseQueries } from "../lib/DatabaseQueries";
 import { RepoHelper } from "../lib/RepoHelper";
+import { WordAltRepo } from "./WordAltRepo";
 
 export class RoundRepo {
     private dq = new DatabaseQueries()
     private respond = new Respond()
     private repoHelper = new RepoHelper()
+    private wordAltRepo = new WordAltRepo()
 
     async insert(req: Request, res: Response) {
         // var for return
@@ -37,8 +39,8 @@ export class RoundRepo {
                     round_number: v.round_number
                 }
             })
-            // query object for insert
-            const queryObject: Omit<IQueryInsert, 'whereColumn' | 'whereValue'> = {
+            // create query object for query execute
+            const queryObject: IQueryInsert = {
                 table: 'abc_rounds',
                 selectColumn: this.dq.queryColumnSelector('rounds', 2345),
                 get insertColumn() {
@@ -53,7 +55,18 @@ export class RoundRepo {
             }
             // success to insert data
             else if(insertResponse.error === null) {
-                returnObject = this.respond.createObject(200, `success ${action}`, insertResponse.data) 
+                // ### INSERT DATA WITH word_id 0 TO abc_words_alt
+                const wordAltData = payload.map(v => {
+                    return {
+                        player_id: v.player_id,
+                        room_id: v.room_id,
+                        word_id: v.answer_id,
+                        word: v.answer_words
+                    }
+                }).filter(v => v.word_id === 0)
+                const wordAltResponse = await this.wordAltRepo.insert(wordAltData)
+                // response object
+                returnObject = wordAltResponse || this.respond.createObject(200, `success ${action}`, insertResponse.data) 
             }
             // return response
             // this var definitely will have value
