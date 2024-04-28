@@ -1,5 +1,5 @@
 import { supabase } from "./database";
-import { IQueryBuilder, IQueryInsert, IQuerySelect, PG_PromiseType } from "./types";
+import { IQueryBuilder, IQueryInsert, IQuerySelect, IQueryUpdate, PG_PromiseType } from "./types";
 
 export class DatabaseQueries {
 
@@ -14,28 +14,34 @@ export class DatabaseQueries {
                 // update rangeMin and rangeMax
                 rangeMin = min; rangeMax = max
             }
-            // run query
-            const {data, error} = queryObject.function ? // is function exist
-                                    await supabase.rpc(queryObject.function) // run function
-                                    : queryObject.whereColumn ?
-                                        // run normal query
-                                        await supabase.from(queryObject.table)
-                                        .select(queryObject.selectColumn as string) // select columns
-                                        .eq(queryObject.whereColumn as string, queryObject.whereValue) // where condition
-                                        .range(rangeMin, rangeMax) // limit, how many data will be retrieved
-                                        .order('id', {ascending: true}) // order data by..
-                                        :
-                                        await supabase.from(queryObject.table)
-                                        .select(queryObject.selectColumn as string) // select columns
-                                        .range(rangeMin, rangeMax) // limit, how many data will be retrieved
-                                        .order('id', {ascending: true}) // order data by..
-            return {data: data, error: error}
+            // run query 
+            if(queryObject.function) {
+                // run function
+                const {data, error} = await supabase.rpc(queryObject.function) 
+                return {data: data, error: error}
+            }
+            else if(queryObject.whereColumn) {
+                // where condition
+                const {data, error} = await supabase.from(queryObject.table)
+                                    .select(queryObject.selectColumn as string) // select columns
+                                    .eq(queryObject.whereColumn as string, queryObject.whereValue) // where condition
+                                    .range(rangeMin, rangeMax) // limit, how many data will be retrieved
+                                    .order('id', {ascending: true}) // order data by..
+                return {data: data, error: error}
+            }
+            else {
+                const {data, error} = await supabase.from(queryObject.table)
+                                    .select(queryObject.selectColumn as string) // select columns
+                                    .range(rangeMin, rangeMax) // limit, how many data will be retrieved
+                                    .order('id', {ascending: true}) // order data by..
+                return {data: data, error: error}
+            }
         }
         return selectAllDataFromDB()
     }
 
     insert(queryObject: Omit<IQueryInsert, 'whereColumn' | 'whereValue'>): PG_PromiseType {
-        // insert player data 
+        // insert data 
         const insertDataToDB = async () => {
             // run query
             const {data, error} = await supabase.from(queryObject.table)
@@ -44,6 +50,19 @@ export class DatabaseQueries {
             return {data: data, error: error}
         }
         return insertDataToDB()
+    }
+
+    update(queryObject: IQueryUpdate): PG_PromiseType {
+        // update data
+        const updateDataToDB = async () => {
+            // run query
+            const {data, error} = await supabase.from(queryObject.table)
+                                .update(queryObject.updateColumn)
+                                .eq(queryObject.whereColumn, queryObject.whereValue)
+                                .select(queryObject.selectColumn as string)
+            return {data: data, error: error}
+        }
+        return updateDataToDB()
     }
 
     /**
@@ -56,11 +75,11 @@ export class DatabaseQueries {
      * - table words = select 'id, category, word' = 123; select 'id, word' = 13;
      * 
      * list of column:
-     * - players - id, username
-     * - profiles - player_id, game_played, words_used
-     * - words - id, category, word
-     * - rooms - name, password, num_players, max_players, rules
-     * - rounds - ...
+     * - players - id | username
+     * - profiles - player_id | game_played | words_used
+     * - words - id | category | word
+     * - rooms - id | thread_id | name | password | num_players | max_players | rules | status
+     * - rounds - id | player_id | room_id | word_id | round_number
      */
     queryColumnSelector(type: string, columns: number) {
         // to save selected column 
@@ -72,7 +91,7 @@ export class DatabaseQueries {
         }
         // for profiles table
         else if(type === 'profiles') {
-            const pickerList: string[] = ['player_id(id, username)', 'game_played', 'words_used']
+            const pickerList: string[] = ['player_id(id, username)', 'game_played', 'words_correct', 'words_used']
             selectedColumns.push(columnPicker(pickerList))
         }
         // for words table
@@ -82,12 +101,13 @@ export class DatabaseQueries {
         }
         // for rooms table
         else if(type === 'rooms') {
-            const pickerList: string[] = ['name', 'password', 'num_players', 'max_players', 'rules']
+            const pickerList: string[] = ['id', 'thread_id', 'name', 'password', 'num_players', 'max_players', 'rules', 'status']
             selectedColumns.push(columnPicker(pickerList))
         }
         // for rounds table
         else if(type === 'rounds') {
-            
+            const pickerList: string[] = ['id', 'player_id', 'room_id', 'word_id', 'round_number']
+            selectedColumns.push(columnPicker(pickerList))
         }
         // return selected columns
         return selectedColumns.join(', ')

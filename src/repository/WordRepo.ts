@@ -29,6 +29,8 @@ export class WordRepo {
                 // set response
                 returnObject = this.respond.createObject(200, `success get categories`, selectResponse.data)
             }
+            // return response
+            // this var definitely will have value
             return returnObject as IResponse
         } catch (err: any) {
             console.log(`error WordRepo getCategories`)
@@ -54,7 +56,7 @@ export class WordRepo {
                 table: 'abc_words',
                 selectColumn: this.dq.queryColumnSelector('words', 123),
                 whereColumn: params.column,
-                whereValue: (params.value as string).replace('-', ' ')
+                whereValue: params.value.replace('-', ' ')
             }
             // select all data with selected category
             const selectResponse = await this.dq.select(queryObject)

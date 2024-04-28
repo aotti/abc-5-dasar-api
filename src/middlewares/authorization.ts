@@ -27,16 +27,16 @@ export class Authorization {
 
     // check if the player is registered
     auth = async (req: Request, res: Response, next: NextFunction) => {
-        if(!req.headers.authorization) {
-            // the authorization header is empty
-            return res.status(403).json({ error: 'no credentials sent!' });
+        if(!req.headers['user-id']) {
+            // the user_id header is empty
+            return res.status(403).json({ error: 'lack of credentials!' });
         }
-        // the authorization header not empty
+        // the user_id header not empty
         const queryObject: IQuerySelect = {
             table: 'abc_players',
             selectColumn: this.dq.queryColumnSelector('players', 1),
             whereColumn: 'id',
-            whereValue: req.headers.authorization
+            whereValue: req.headers['user-id'] as string
         }
         // run query
         const selectResponse = await this.dq.select(queryObject)

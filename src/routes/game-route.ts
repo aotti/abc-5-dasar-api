@@ -4,6 +4,7 @@ import { WordController } from '../controllers/WordController'
 import { ProfileController } from '../controllers/ProfileController'
 import { RegisterController } from '../controllers/RegisterController'
 import { RoomController } from '../controllers/RoomController'
+import { RoundController } from '../controllers/RoundController'
 
 const gameRouter = express.Router()
 // middleware 
@@ -13,6 +14,7 @@ const wordController = new WordController()
 const profileController = new ProfileController()
 const registerController = new RegisterController()
 const roomController = new RoomController()
+const roundController = new RoundController()
 
 // get
 gameRouter
@@ -21,6 +23,8 @@ gameRouter
     .get('/word/:category', wordController.getWords)
     // profile
     .get('/profile/:player_id', profileController.getProfile)
+    // room
+    .get('/room/join', authorization.uuid, authorization.auth, roomController.joinRoom)
 
 // post
 gameRouter
@@ -29,6 +33,15 @@ gameRouter
     // register
     .post('/register/player', authorization.uuid, registerController.player)
     // room
-    .post('/room/create', authorization.auth, roomController.createRoom)
+    .post('/room/create', authorization.uuid, authorization.auth, roomController.createRoom)
+    // rounds
+    .post('/round/insert', authorization.uuid, authorization.auth, roundController.insert)
+
+// patch
+gameRouter
+    // profile
+    .patch('/profile/update', authorization.uuid, authorization.auth, profileController.updateProfile)
+    // room
+    .patch('/room/update', authorization.uuid, authorization.auth, roomController.updateRoom)
 
 export { gameRouter }

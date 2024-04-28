@@ -18,17 +18,34 @@ type IUWordsType = {
     word: string;
 }
 
-type IUPlayersType = {
+type IUProfileType = {
+    player_id: string;
+    game_played: number;
+    words_correct: number;
+    words_used: number;
+}
+
+type IURegisterType = {
     id: string;
     username: string;
 }
 
-type IURoomType = {
+type IUCreateRoomType = {
+    id: number;
+    thread_id?: string;
     name: string;
     password?: string | null;
     num_players: number;
     max_players: number;
     rules: string;
+    status: string;
+}
+
+type IURoundsType = {
+    player_id: string;
+    room_id: number;
+    word_id: number;
+    round_number: number;
 }
 
 // queries
@@ -50,10 +67,14 @@ interface IQueryInsert extends IQueryBuilder {
     get insertColumn(): 
         // word
         IUWordsType | IUWordsType[] | 
-        // player
-        IUPlayersType |
+        // profile
+        IUProfileType |
+        // register
+        IURegisterType |
         // room
-        IURoomType;
+        IUCreateRoomType |
+        // rounds
+        IURoundsType | IURoundsType[];
 }
 
 interface IQueryUpdate extends IQueryBuilder {
@@ -61,11 +82,15 @@ interface IQueryUpdate extends IQueryBuilder {
     whereValue: string | number;
     get updateColumn(): 
         // word
-        IUWordsType | IUWordsType[] | 
-        // player
-        IUPlayersType |
+        IUWordsType | 
+        // profile
+        Omit<IUProfileType, 'player_id'> |
+        // register
+        IURegisterType |
         // room
-        IURoomType;
+        Pick<IUCreateRoomType, 'id' | 'thread_id' | 'num_players' | 'status'> |
+        // rounds
+        IURoundsType;
 }
 
 // ~~ REQUEST ~~
@@ -84,23 +109,22 @@ interface IAuthClientInputs {
 interface IAuthClientReq extends IAuthClientInputs {
     clientInputs: {
         action: string;
-        payload: IRequestInsertWord['payload'] | IRequestRegisterPlayer['payload']
+        payload: IRequestInsertWord['payload'] | 
+                IRequestInsertRound['payload']|
+                IRequestRegisterPlayer['payload'] |
+                IRequestCreateRoom['payload'] |
+                IRequestUpdateRoom['payload'] 
     };
 }
 
 // ~~ WORD REPO ~~
 interface IParamsGetWords {
     column: string;
-    value: string | number;
+    value: string;
 }
 
 interface IRequestInsertWord extends IRequest {
-    payload: [
-        { 
-            category: string, 
-            word: string 
-        }
-    ]
+    payload: [ IUWordsType ]
 }
 
 type WordSelectResType = {
@@ -121,27 +145,40 @@ interface IProfileSelect extends IProfile {
     id?: number;
     username: string;
     game_played: number;
+    words_correct: number;
     words_used: number;
+}
+
+interface IRequestUpdateProfile extends IRequest {
+    payload: IUProfileType
 }
 
 // ~~ REGISTER REPO ~~
 interface IRequestRegisterPlayer extends IRequest {
-    payload: {
-        id: string;
-        username: string;
-    }
+    payload: IURegisterType
 }
 
 // ~~ ROOM REPO ~~
 interface IRequestCreateRoom extends IRequest {
+    // id, thread_id, name, password, num_players, max_players, rules, status
+    payload: IUCreateRoomType
+}
+
+interface IRequestUpdateRoom extends IRequest {
+    payload: Pick<IUCreateRoomType, 'id' | 'thread_id' | 'num_players' | 'status'>;
+}
+
+// ~~ ROUND REPO ~~
+interface IRequestInsertRound extends IRequest {
     payload: {
-        // name, password, num_players, max_players, rules
-        name: string;
-        password: string | null;
-        num_players: number;
-        max_players: number;
-        rules: string;
-    }
+        // room_id, round_number, game_rounds, player_id, word_id, answer_points (words_correct)
+        room_id: number;
+        round_number: number;
+        game_rounds: number;
+        player_id: string;
+        answer_id: number; // word_id
+        answer_points: number; // words_correct
+    }[]
 }
 
 // ~~ REPO HELPER ~~
@@ -166,8 +203,12 @@ export {
     // profile
     IProfileSelect,
     IRequestRegisterPlayer,
+    IRequestUpdateProfile,
     // room
     IRequestCreateRoom,
+    IRequestUpdateRoom,
+    // round
+    IRequestInsertRound,
     // repo helper
     repoHelperInputsType
 }

@@ -12,4 +12,18 @@ export class RoomController {
                 return this.respond.send(res, result)
             })
     }
+
+    updateRoom = (req: Request, res: Response) => {
+        this.roomRepo.updateRoom(req, res)
+            .then(result => {
+                return this.respond.send(res, result)
+            })
+    }
+
+    joinRoom = (req: Request, res: Response) => {
+        this.roomRepo.joinRoom(req, res)
+            .then(result => {
+                return this.respond.send(res, result)
+            })
+    }
 }

@@ -12,4 +12,11 @@ export class ProfileController {
                 return this.respond.send(res, result)
             })
     }
+
+    updateProfile = (req: Request, res: Response) => {
+        this.profileRepo.updateProfile(req, res)
+            .then(result => {
+                return this.respond.send(res, result)
+            })
+    }
 }
