@@ -17,3 +17,5 @@ app.get('/', (req, res) => {
 app.use('/api', gameRouter)
 
 app.listen(port, () => {console.log(`listening to port ${port}`)})
+
+export default app
