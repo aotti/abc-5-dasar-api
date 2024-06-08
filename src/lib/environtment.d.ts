@@ -4,6 +4,7 @@ declare global {
             DB_URL: string;
             DB_APIKEY: string;
             UUID_V4: string;
+            WEBHOOK_URL: string;
         }
     }
   }

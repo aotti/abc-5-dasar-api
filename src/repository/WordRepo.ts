@@ -135,9 +135,9 @@ export class WordRepo {
         }
         // handle promise
         try {
-            // trying to connect db
+            // match payload words with table words
             const matchWords = await this.matchWords(payload)
-            // fail to connect db
+            // error found after matching words
             if((matchWords as IResponse).status) return matchWords as IResponse
             // filtered payload for insertColumn
             const insertPayload = matchWords as {category: string, word: string}[]
@@ -163,6 +163,19 @@ export class WordRepo {
                 const successText = `success ${action} (${insertResponse.data.length} of ${payload.length} words)`
                 // set response
                 returnObject = this.respond.createObject(200, successText, insertResponse.data) 
+                // send discord webhook
+                const webhookContent = {
+                    content: `category: ${payload[0].category}\n${successText}`
+                }
+                fetch(process.env['WEBHOOK_URL'], {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify(webhookContent)
+                })
+                .then(hook => console.log(`${hook.status}: ${hook.statusText}`))
+                .catch(err => console.log(err))
             }
             // return response
             // this var definitely will have value
