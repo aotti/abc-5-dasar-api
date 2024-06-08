@@ -167,15 +167,15 @@ export class WordRepo {
                 const webhookContent = {
                     content: `category: ${payload[0].category}\n${successText}`
                 }
-                fetch(process.env['WEBHOOK_URL'], {
+                const webhookFetchOptions: RequestInit = {
                     method: 'POST',
                     headers: {
                         'content-type': 'application/json'
                     },
                     body: JSON.stringify(webhookContent)
-                })
-                .then(hook => console.log(`${hook.status}: ${hook.statusText}`))
-                .catch(err => console.log(err))
+                }
+                const webhookFetch = await fetch(process.env['WEBHOOK_URL'], webhookFetchOptions)
+                console.log(webhookFetch);
             }
             // return response
             // this var definitely will have value
