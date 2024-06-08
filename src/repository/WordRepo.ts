@@ -54,17 +54,18 @@ export class WordRepo {
             // words container
             const wordsContainer: {id: number; word: string}[] = []
             // total limit to get data from db
-            const baseLimit = 1000
+            const baseLimit = 2000
+            const baseLoop = baseLimit / 500
             // limit (100) data per fetch data (for loop)
             let [limitMin, limitMax]: [number, number] = [0, 0]
             // loop for limit
-            for(let i=0; i<10; i++) {
-                // 0 * 1000 > 0.1 * 1000 > 0.2 * 1000
+            for(let i=0; i<baseLoop; i++) {
+                // 0 * 2000 > 0.1 * 2000 > 0.2 * 2000
                 // 0 > 100 > 200
-                limitMin = (i / 10) * baseLimit
+                limitMin = (i / baseLoop) * baseLimit
                 // 0.1 * 1000 > 0.2 * 1000 > 0.3 * 1000
                 // 100 > 200 > 300
-                limitMax = ((i+1) / 10) * baseLimit - 1
+                limitMax = ((i+1) / baseLoop) * baseLimit - 1
                 // create query object for query execute
                 const queryObject: IQuerySelect = {
                     table: 'abc_words',
@@ -207,13 +208,14 @@ export class WordRepo {
         // filtered payload for insertColumn
         const tempPayload: {category: string, word: string}[] = []
         // total limit to get data from db
-        const baseLimit = 1000
+        const baseLimit = 2000
+        const baseLoop = baseLimit / 500
         // limit (100) data per fetch data (for loop)
         let [limitMin, limitMax]: [number, number] = [0, 0]
         // loop for limit
-        for(let i=0; i<10; i++) {
-            limitMin = (i / 10) * baseLimit
-            limitMax = ((i+1) / 10) * baseLimit - 1
+        for(let i=0; i<baseLoop; i++) {
+            limitMin = (i / baseLoop) * baseLimit
+            limitMax = ((i+1) / baseLoop) * baseLimit - 1
             // create query object for query execute
             // query object for select all
             const queryObject: IQuerySelect = {
