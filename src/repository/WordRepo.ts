@@ -222,7 +222,7 @@ export class WordRepo {
                 table: 'abc_words',
                 selectColumn: this.dq.queryColumnSelector('words', 23),
                 whereColumn: 'category',
-                whereValue: payload[0].category,
+                whereValue: payload[0].category.replace('-', ' '),
                 limit: { min: limitMin, max: limitMax }
             }
             // select data
