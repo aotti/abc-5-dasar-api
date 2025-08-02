@@ -114,6 +114,7 @@ export class RepoHelper {
             case 'update room':
                 return key === 'id' || key === 'thread_id' || key === 'num_players' || key === 'status' ? true : false
             case 'insert rounds':
+            case 'update rounds':
                 return key === 'room_id' || key === 'round_number' || key === 'game_rounds' || key === 'player_id' 
                     || key === 'answer_id' || key === 'answer_words' || key === 'answer_points' ? true : false
             case 'update profile':

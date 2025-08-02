@@ -12,4 +12,11 @@ export class RoundController {
                 return this.respond.send(res, result)
             })
     }
+
+    update = (req: Request, res: Response) => {
+        this.roundRepo.update(req, res)
+            .then(result => {
+                return this.respond.send(res, result)
+            })
+    }
 }

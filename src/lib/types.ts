@@ -184,6 +184,15 @@ interface IRequestInsertRound extends IRequest {
     }[]
 }
 
+interface IRequestUpdateRound extends IRequest {
+    payload: {
+        room_id: number;
+        player_id: string;
+        answer_id: number; // word_id
+        round_number: number;
+    }
+}
+
 // ~~ WORD ALT REPO ~~
 type WordAltDataType = {
     player_id: string;
@@ -219,6 +228,7 @@ export {
     IRequestUpdateRoom,
     // round
     IRequestInsertRound,
+    IRequestUpdateRound,
     // word alt
     WordAltDataType,
     // repo helper

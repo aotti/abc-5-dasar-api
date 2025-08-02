@@ -43,5 +43,7 @@ gameRouter
     .patch('/profile/update', authorization.uuid, authorization.auth, profileController.updateProfile)
     // room
     .patch('/room/update', authorization.uuid, authorization.auth, roomController.updateRoom)
+    // round
+    .patch('/round/update', authorization.uuid, authorization.auth, roundController.update)
 
 export { gameRouter }

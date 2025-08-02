@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { IAuthClientReq, IQueryInsert, IRequestInsertRound, IResponse } from "../lib/types";
+import { IAuthClientReq, IQueryInsert, IQueryUpdate, IRequestInsertRound, IRequestUpdateRound, IResponse } from "../lib/types";
 import { Respond } from "../lib/Respond";
 import { DatabaseQueries } from "../lib/DatabaseQueries";
 import { RepoHelper } from "../lib/RepoHelper";
@@ -73,6 +73,57 @@ export class RoundRepo {
             return returnObject!
         } catch (err: any) {
             console.log(`error RoundRepo insert`)
+            console.log(err)
+            // return response
+            returnObject = this.respond.createObject(500, err.message, [])
+            return returnObject
+        }
+    }
+
+    async update(req: Request, res: Response) {
+        // var for return
+        let returnObject: IResponse
+        // destructure req.body
+        const { action, payload }: IRequestUpdateRound = req.body
+        // data for authentication
+        const authData: IAuthClientReq = {
+            reqMethod: req.method,
+            authKey: 'update rounds',
+            clientInputs: req.body
+        }
+        // check payload
+        const [authStatus, errorMessage] = this.repoHelper.checkClientInputs(authData) as [boolean, IResponse | null]
+        if(authStatus) {
+            // payload doesnt pass the authentication
+            return returnObject = errorMessage as IResponse
+        }
+        // handle promise
+        try {
+            // query object for update
+            const queryObject: IQueryUpdate = {
+                table: 'abc_rounds',
+                selectColumn: this.dq.queryColumnSelector('rounds', 345),
+                whereColumn: 'room_id',
+                whereValue: payload.room_id,
+                get updateColumn() {
+                    return {updated_at: new Date().toISOString()} as any
+                }
+            }
+            // update data
+            const updateResponse = await this.dq.update(queryObject)
+            // failed to update data
+            if(updateResponse.data === null) {
+                returnObject = this.respond.createObject(500, updateResponse.error, []) 
+            }
+            // success to update data
+            else if(updateResponse.error === null) {
+                returnObject = this.respond.createObject(200, `success ${action}`, updateResponse.data) 
+            }
+            // return response
+            // this var definitely will have value
+            return returnObject!
+        } catch (err: any) {
+            console.log(`error RoundRepo update`)
             console.log(err)
             // return response
             returnObject = this.respond.createObject(500, err.message, [])
