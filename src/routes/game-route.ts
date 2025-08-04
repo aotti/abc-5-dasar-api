@@ -21,7 +21,7 @@ const roundController = new RoundController()
 const corsOptions: CorsOptions = {
     origin: process.env.ALLOWED_ORIGINS.split(','),
     methods: ['GET', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'user-id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'credentials', 'user-id'],
     credentials: true,
 }
 gameRouter.use(cors(corsOptions))
