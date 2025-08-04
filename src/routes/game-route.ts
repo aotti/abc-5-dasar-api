@@ -1,4 +1,5 @@
 import express from 'express' 
+import cors, { CorsOptions } from 'cors'
 import { Authorization } from '../middlewares/authorization'
 import { WordController } from '../controllers/WordController'
 import { ProfileController } from '../controllers/ProfileController'
@@ -7,13 +8,6 @@ import { RoomController } from '../controllers/RoomController'
 import { RoundController } from '../controllers/RoundController'
 
 const gameRouter = express.Router()
-// cors
-const cors = require('cors')
-const corsOptions = {
-    origin: process.env.ALLOWED_ORIGINS.split(','),
-    methods: ['GET', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'user-id'],
-}
 // middleware 
 const authorization = new Authorization()
 // game classes
@@ -23,10 +17,19 @@ const registerController = new RegisterController()
 const roomController = new RoomController()
 const roundController = new RoundController()
 
+// cors
+const corsOptions: CorsOptions = {
+    origin: process.env.ALLOWED_ORIGINS.split(','),
+    methods: ['GET', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'user-id'],
+    credentials: true,
+}
+gameRouter.use(cors(corsOptions))
+
 // get
 gameRouter
     // word
-    .get('/word/categories', cors(corsOptions), wordController.getCategories)
+    .get('/word/categories', wordController.getCategories)
     .get('/word/:category', wordController.getWords)
     // profile
     .get('/profile/:player_id', profileController.getProfile)
