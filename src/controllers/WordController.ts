@@ -14,7 +14,7 @@ export class WordController {
                 const origin = req.headers.origin!
                 console.log(origin);
 
-                if(allowedOrigins.match(origin)) 
+                if(origin && allowedOrigins.match(origin)) 
                     res.setHeader('Access-Control-Allow-Origin', origin)
                 
                 return this.respond.send(res, result)
