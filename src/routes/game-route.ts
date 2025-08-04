@@ -7,6 +7,13 @@ import { RoomController } from '../controllers/RoomController'
 import { RoundController } from '../controllers/RoundController'
 
 const gameRouter = express.Router()
+// cors
+const cors = require('cors')
+const corsOptions = {
+    origin: process.env.ALLOWED_ORIGINS.split(','),
+    methods: ['GET', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'user-id'],
+}
 // middleware 
 const authorization = new Authorization()
 // game classes
@@ -19,7 +26,7 @@ const roundController = new RoundController()
 // get
 gameRouter
     // word
-    .get('/word/categories', wordController.getCategories)
+    .get('/word/categories', cors(corsOptions), wordController.getCategories)
     .get('/word/:category', wordController.getWords)
     // profile
     .get('/profile/:player_id', profileController.getProfile)
