@@ -40,6 +40,8 @@ gameRouter
 gameRouter
     // word
     .post('/word/insert', authorization.uuid, wordController.insertWords)
+    // word alt
+    .post('/word-alt/insert', authorization.uuid, wordController.insertWordAlt)
     // register
     .post('/register/player', authorization.uuid, registerController.player)
     // room

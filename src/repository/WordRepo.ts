@@ -1,13 +1,15 @@
 import { Request, Response } from "express";
 import { DatabaseQueries } from "../lib/DatabaseQueries"
-import { IQueryInsert, IQuerySelect, IParamsGetWords, IRequestInsertWord, IResponse, WordSelectResType, IAuthClientReq } from "../lib/types"
+import { IQueryInsert, IQuerySelect, IParamsGetWords, IRequestInsertWord, IResponse, WordSelectResType, IAuthClientReq, IRequestInsertRound } from "../lib/types"
 import { Respond } from "../lib/Respond";
 import { RepoHelper } from "../lib/RepoHelper";
+import { WordAltRepo } from "./WordAltRepo";
 
 export class WordRepo {
     private dq = new DatabaseQueries()
     private respond = new Respond()
     private repoHelper = new RepoHelper()
+    private wordAltRepo = new WordAltRepo()
 
     async getCategories(req: Request, res: Response) {
         // var for return
@@ -183,6 +185,48 @@ export class WordRepo {
             return returnObject!
         } catch (err: any) {
             console.log(`error WordRepo insertWords`)
+            console.log(err)
+            // return response
+            returnObject = this.respond.createObject(500, err.message, [])
+            return returnObject
+        }
+    }
+
+    async insertWordAlt(req: Request, res: Response) {
+        // var for return
+        let returnObject: IResponse
+        // destructure req.body
+        const { action, payload }: IRequestInsertRound = req.body
+        // data for authentication
+        const authData: IAuthClientReq = {
+            reqMethod: req.method,
+            authKey: 'insert word alt',
+            clientInputs: req.body
+        }
+        // check payload
+        const [authStatus, errorMessage] = this.repoHelper.checkClientInputs(authData) as [boolean, IResponse | null]
+        if(authStatus) {
+            // payload doesnt pass the authentication
+            return returnObject = errorMessage as IResponse
+        }
+
+        // handle promise
+        try {
+            // insert data with word_id 0 TO abc_words_alt
+            const wordAltData = payload.map(v => {
+                return {
+                    player_id: v.player_id,
+                    room_id: v.room_id,
+                    word_id: v.answer_id,
+                    word: v.answer_words
+                }
+            }).filter(v => v.word_id === 0)
+            const wordAltResponse = await this.wordAltRepo.insert(wordAltData)
+            // response object
+            returnObject = wordAltResponse || this.respond.createObject(200, `success ${action}`, []) 
+            return returnObject
+        } catch (err: any) {
+            console.log(`error WordAltRepo insert`)
             console.log(err)
             // return response
             returnObject = this.respond.createObject(500, err.message, [])

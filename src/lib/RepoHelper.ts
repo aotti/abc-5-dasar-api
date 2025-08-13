@@ -11,7 +11,9 @@ export class RepoHelper {
      */
     checkClientInputs(authentic: IAuthClientReq): repoHelperInputsType {
         // if payload array
-        const checkedPayload = Array.isArray(authentic.clientInputs.payload) ? authentic.clientInputs.payload[0] : authentic.clientInputs.payload
+        const checkedPayload = Array.isArray(authentic.clientInputs.payload) 
+                            ? authentic.clientInputs.payload[0] 
+                            : authentic.clientInputs.payload
         // filtered data
         const { reqMethod, action, payload } = {
             reqMethod: authentic.reqMethod,
@@ -115,6 +117,7 @@ export class RepoHelper {
                 return key === 'id' || key === 'thread_id' || key === 'num_players' || key === 'status' ? true : false
             case 'insert rounds':
             case 'update rounds':
+            case 'insert word alt':
                 return key === 'room_id' || key === 'round_number' || key === 'game_rounds' || key === 'player_id' 
                     || key === 'answer_id' || key === 'answer_words' || key === 'answer_points' ? true : false
             case 'update profile':

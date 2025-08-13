@@ -26,4 +26,11 @@ export class WordController {
                 return this.respond.send(res, result)
             })
     }
+
+    insertWordAlt = (req: Request, res: Response) => {
+        this.wordRepo.insertWordAlt(req, res)
+            .then(result => {
+                return this.respond.send(res, result)
+            })
+    }
 }
